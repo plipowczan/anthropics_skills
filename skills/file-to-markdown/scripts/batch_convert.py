@@ -42,10 +42,14 @@ def find_files(directory: Path, pattern: str = "*.*") -> List[Path]:
     # Handle multiple patterns like "*.{pdf,docx}"
     if "{" in pattern and "}" in pattern:
         # Extract extensions from pattern like "*.{pdf,docx}"
-        base = pattern.split("{")[0]
-        extensions = pattern.split("{")[1].split("}")[0].split(",")
+        # Split carefully to preserve the base pattern including the dot
+        before_brace = pattern.split("{")[0]  # e.g., "*."
+        extensions_part = pattern.split("{")[1].split("}")[0]  # e.g., "pdf,docx"
+        extensions = extensions_part.split(",")
+        
+        # Check if base already ends with wildcard pattern separator
         for ext in extensions:
-            files.extend(directory.glob(f"{base}{ext}"))
+            files.extend(directory.glob(f"{before_brace}{ext}"))
     else:
         files.extend(directory.glob(pattern))
     

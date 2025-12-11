@@ -58,6 +58,9 @@ def convert_file_to_markdown(input_file: str, output_file: str = None) -> str:
     
     output_path = Path(output_file)
     
+    # Create parent directories if they don't exist
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
     # Save to file
     output_path.write_text(markdown_content, encoding='utf-8')
     print(f"✓ Converted successfully to: {output_path}")
