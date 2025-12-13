@@ -63,8 +63,8 @@ def convert_file_to_markdown(input_file: str, output_file: str = None) -> str:
     
     # Save to file
     output_path.write_text(markdown_content, encoding='utf-8')
-    print(f"✓ Converted successfully to: {output_path}")
-    
+    print(f"[OK] Converted successfully to: {output_path}")
+
     return markdown_content
 
 

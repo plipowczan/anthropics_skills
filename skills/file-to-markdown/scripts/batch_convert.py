@@ -108,21 +108,21 @@ def batch_convert(input_dir: str, output_dir: str = None, pattern: str = "*.*") 
             result = md.convert(str(file_path))
             
             if not result or not result.text_content:
-                print("✗ No content extracted")
+                print("[X] No content extracted")
                 error_count += 1
                 continue
-            
+
             # Create output file path
             output_file = output_path / f"{file_path.stem}.md"
-            
+
             # Save markdown content
             output_file.write_text(result.text_content, encoding='utf-8')
-            
-            print(f"✓ Success")
+
+            print("[OK] Success")
             success_count += 1
-            
+
         except Exception as e:
-            print(f"✗ Error: {e}")
+            print(f"[X] Error: {e}")
             error_count += 1
     
     # Print summary

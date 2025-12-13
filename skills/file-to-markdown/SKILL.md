@@ -1,149 +1,207 @@
 ---
 name: file-to-markdown
 description: Convert any file to markdown format using the markitdown library. Use this skill when users need to convert documents (PDF, DOCX, XLSX, PPTX, images, HTML, CSV, JSON, XML, audio files, etc.) into markdown format for easier reading, editing, or integration into markdown-based workflows.
+license: Complete terms in LICENSE.txt
 ---
 
 # File to Markdown Converter
 
-## Overview
+Convert files to markdown format using the markitdown library. This skill handles documents, images, audio, structured data, and more.
 
-This skill enables conversion of various file formats to markdown using the markitdown library. It supports a wide range of formats including office documents, PDFs, images, audio, and structured data files.
+## When to Use This Skill
 
-## Supported File Formats
+Use this skill when the user needs to:
 
-The markitdown library supports:
-- **Documents**: PDF, DOCX, PPTX, XLSX
-- **Web**: HTML, MHTML
-- **Images**: PNG, JPG, JPEG, GIF (with OCR and image description)
-- **Audio**: MP3, WAV (with transcription)
-- **Data**: CSV, JSON, XML
-- **Archives**: ZIP
-- **Other**: Plain text files
+- Convert documents (PDF, DOCX, PPTX, XLSX) to markdown
+- Extract text from images using OCR
+- Transcribe audio files to text
+- Convert structured data (CSV, JSON, XML) to markdown tables
+- Process web content (HTML, MHTML) into markdown
+- Batch convert multiple files to markdown
 
-## Installation
+## Supported Formats
 
-Before using this skill, ensure markitdown is installed:
+**Documents**: PDF, DOCX, PPTX, XLSX
+
+**Web**: HTML, MHTML
+
+**Images**: PNG, JPG, JPEG, GIF (with OCR and description)
+
+**Audio**: MP3, WAV (with transcription)
+
+**Data**: CSV, JSON, XML
+
+**Archives**: ZIP
+
+**Other**: Plain text files
+
+## Decision Tree: Choosing Your Approach
+
+```text
+User request → Single file or multiple files?
+    ├─ Single file → Use helper script
+    │   └─ Run: python scripts/convert_file.py <input> [output]
+    │
+    └─ Multiple files → Use batch conversion
+        └─ Run: python scripts/batch_convert.py <input_dir> [output_dir] [--pattern PATTERN]
+```
+
+## Installation Check
+
+Before converting, verify markitdown is installed:
 
 ```bash
 pip install markitdown
 ```
 
-For full functionality including image and audio processing:
+For full functionality (image OCR, audio transcription):
 
 ```bash
 pip install markitdown[all]
 ```
 
-## Basic Usage
+## Conversion Workflow
 
-### Converting a File
+### Single File Conversion
 
-Use the provided script to convert any file to markdown:
-
-```python
-from markitdown import MarkItDown
-
-# Initialize the converter
-md = MarkItDown()
-
-# Convert a file
-result = md.convert("path/to/file.pdf")
-
-# Access the markdown content
-markdown_text = result.text_content
-
-# Save to a file
-with open("output.md", "w", encoding="utf-8") as f:
-    f.write(markdown_text)
-```
-
-### Using the Helper Script
-
-The skill includes `scripts/convert_file.py` for quick conversions:
+**Use the helper script** as your primary method:
 
 ```bash
 python scripts/convert_file.py input_file.pdf output.md
 ```
 
-## Advanced Features
+The script handles:
+
+- File validation
+- Conversion with error handling
+- Output file creation with proper encoding
+- Progress reporting
+
+**If output filename is omitted**, the script creates `input_file.md` automatically.
 
 ### Batch Conversion
 
-Convert multiple files at once:
+**For multiple files**, use the batch converter:
 
-```python
-from pathlib import Path
-from markitdown import MarkItDown
+```bash
+# Convert all files in a directory
+python scripts/batch_convert.py ./documents
 
-md = MarkItDown()
+# Specify output directory
+python scripts/batch_convert.py ./documents ./markdown_output
 
-# Convert all PDFs in a directory
-for pdf_file in Path("input_dir").glob("*.pdf"):
-    result = md.convert(str(pdf_file))
-    output_file = f"output/{pdf_file.stem}.md"
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(result.text_content)
+# Filter by pattern
+python scripts/batch_convert.py ./documents ./output --pattern "*.pdf"
+
+# Multiple extensions
+python scripts/batch_convert.py ./documents ./output --pattern "*.{pdf,docx}"
 ```
 
-### Image Processing
+The batch script:
 
-For images, markitdown can:
-- Perform OCR to extract text
-- Generate image descriptions using vision models
-- Preserve image references in the markdown
+- Automatically excludes `.md` files
+- Provides progress tracking
+- Reports success/failure for each file
+- Creates output directories as needed
 
-### Audio Transcription
+### Direct Python Integration
 
-Audio files are automatically transcribed to text and formatted as markdown.
+**When helper scripts don't fit**, use the markitdown library directly:
 
-### Structured Data
+```python
+from markitdown import MarkItDown
 
-CSV, JSON, and XML files are converted to markdown tables or formatted text structures.
+# Initialize converter
+md = MarkItDown()
+
+# Convert file
+try:
+    result = md.convert("path/to/file.pdf")
+    if result and result.text_content:
+        # Process or save markdown
+        with open("output.md", "w", encoding="utf-8") as f:
+            f.write(result.text_content)
+    else:
+        print("No content extracted")
+except Exception as e:
+    print(f"Conversion failed: {e}")
+```
+
+## Format-Specific Guidance
+
+### Images (PNG, JPG, GIF)
+
+- markitdown performs OCR to extract text
+- Can generate image descriptions using vision models
+- Best results with clear, well-lit text
+- May not preserve complex layouts perfectly
+
+### Audio (MP3, WAV)
+
+- Automatically transcribed to text
+- Requires good audio quality for accuracy
+- Processing time increases with file length
+- Output formatted as markdown text
+
+### Documents (PDF, DOCX, PPTX, XLSX)
+
+- Text extraction maintains basic structure
+- Tables converted to markdown tables
+- Some complex formatting may be simplified
+- XLSX: each sheet becomes a section with table
+
+### Structured Data (CSV, JSON, XML)
+
+- CSV: converted to markdown tables
+- JSON: formatted as readable text structure
+- XML: converted to hierarchical markdown
+
+### Web Content (HTML, MHTML)
+
+- Extracts main content
+- Converts HTML to clean markdown
+- Preserves links and basic formatting
 
 ## Error Handling
 
-Always handle potential errors during conversion:
+**Common errors and solutions:**
 
-```python
-from markitdown import MarkItDown
+1. **ImportError: markitdown not installed**
+   - Install with: `pip install markitdown`
+   - For full features: `pip install markitdown[all]`
 
-md = MarkItDown()
+2. **FileNotFoundError**
+   - Verify file path is correct
+   - Use absolute paths when uncertain
 
-try:
-    result = md.convert("input_file.pdf")
-    if result and result.text_content:
-        print(result.text_content)
-    else:
-        print("No content extracted from file")
-except Exception as e:
-    print(f"Error converting file: {e}")
-```
+3. **No content extracted**
+   - File may be corrupted or empty
+   - Format may not be supported
+   - Try with a different file to verify installation
 
-## Common Use Cases
+4. **Encoding errors**
+   - Always use `encoding='utf-8'` when writing output files
+   - Helper scripts handle this automatically
 
-1. **Document Migration**: Convert legacy documents to markdown for version control
-2. **Content Extraction**: Extract text from PDFs or images for processing
-3. **Documentation**: Convert various formats to markdown for documentation systems
-4. **Data Analysis**: Convert structured data files to readable markdown tables
-5. **Accessibility**: Convert images and audio to text-based markdown
+## Best Practices
 
-## Tips
+- **Start with helper scripts**: They handle common cases reliably
+- **Test with samples first**: Verify conversion quality before batch processing
+- **Use batch converter for large sets**: More efficient than individual conversions
+- **Handle errors gracefully**: Not all files convert perfectly
+- **Preserve original files**: Conversion is non-destructive, but verify output before deleting sources
+- **Check output quality**: Some complex formatting may not translate perfectly
 
-- For best results with images, ensure adequate lighting and clear text
-- Audio files should have good audio quality for accurate transcription
-- Large files may take longer to process
-- Some complex formatting may not be perfectly preserved in markdown
-- Test with sample files first for critical conversions
-
-## Resources
+## Reference Files
 
 ### scripts/
-- `convert_file.py`: Command-line tool for single file conversion
-- `batch_convert.py`: Batch conversion utility for directories
+
+- **convert_file.py**: Single file conversion with error handling
+- **batch_convert.py**: Directory-based batch conversion with pattern matching
 
 ### references/
-- `markitdown_api.md`: Complete API reference for markitdown library
-- `format_guide.md`: Format-specific conversion tips and limitations
 
+- **markitdown_api.md**: Complete API reference for markitdown library
+- **format_guide.md**: Format-specific conversion tips and limitations
 
-
+**Always run scripts with `--help` first** to see current usage and options.
