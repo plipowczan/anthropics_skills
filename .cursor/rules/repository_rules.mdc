@@ -1,0 +1,412 @@
+---
+alwaysApply: true
+---
+
+# Claude Code Skills Generator - Cursor Rules
+
+## Projekt
+
+To repozytorium zawiera Skills dla Claude Code - modularne pakiety rozszerzające możliwości Claude poprzez specjalizowaną wiedzę, workflow i narzędzia. Każdy Skill składa się z pliku SKILL.md z frontmatter YAML oraz opcjonalnych zasobów (scripts/, references/, assets/).
+
+## Świadomość Projektu
+
+### Struktura Skills
+
+Każdy Skill MUSI mieć następującą strukturę:
+
+```
+skill-name/
+├── SKILL.md (wymagany)
+│   ├── YAML frontmatter (wymagany)
+│   │   ├── name: (wymagany, lowercase, kreski, max 64 znaki)
+│   │   └── description: (wymagany, max 1024 znaki)
+│   └── Markdown instrukcje (wymagany)
+└── Zasoby opcjonalne
+    ├── scripts/          - Kod wykonywalny (Python/Bash/etc.)
+    ├── references/       - Dokumentacja do ładowania w razie potrzeby
+    └── assets/           - Pliki używane w output (szablony, ikony, czcionki)
+```
+
+### Lokalizacje Skills
+
+- **Personal Skills**: `~/.claude/skills/` - dostępne we wszystkich projektach użytkownika
+- **Project Skills**: `.claude/skills/` - współdzielone z zespołem przez git
+- **Plugin Skills**: automatycznie dostępne z zainstalowanych pluginów
+
+### Pliki Referencyjne
+
+- `skills/skill-creator/SKILL.md` - główny przewodnik tworzenia Skills
+- `skills/skill-creator/references/workflows.md` - wzorce workflow
+- `skills/skill-creator/references/output-patterns.md` - wzorce output
+- `skills/skill-creator/scripts/init_skill.py` - inicjalizacja nowego Skill
+- `skills/skill-creator/scripts/package_skill.py` - pakowanie Skill do .skill
+- Dokumentacja: <https://code.claude.com/docs/en/skills>
+
+## Jakość Kodu
+
+### YAML Frontmatter
+
+- ZAWSZE zaczynaj od `---` na linii 1
+- ZAWSZE zamykaj `---` przed treścią Markdown
+- Używaj tylko pól: `name` i `description`
+- `name`: tylko małe litery, cyfry, kreski (max 64 znaki)
+- `description`: musi zawierać CO Skill robi ORAZ KIEDY go używać (max 1024 znaki)
+- NIE dodawaj sekcji "When to Use" w body - tylko w description
+- Używaj spacji, nie tabów w YAML
+- Poprawna składnia YAML (cudzysłowy dla wartości ze znakami specjalnymi)
+
+### SKILL.md Body
+
+- Używaj formy rozkazującej/infinitiwu ("Extract text", "Create document", nie "Extracts text", "Creates document")
+- Zachowaj SKILL.md zwięzłym - maksymalnie 500 linii
+- Przenieś szczegółowe informacje do plików references/ gdy przekraczasz limit
+- ZAWSZE referencuj pliki z references/ w SKILL.md z opisem kiedy je czytać
+- Unikaj głębokiego zagnieżdżenia referencji - wszystkie pliki references/ powinny być linkowane bezpośrednio z SKILL.md
+- Dla plików references/ dłuższych niż 100 linii, dodaj spis treści na górze
+
+### Progressive Disclosure
+
+Skills używają trójpoziomowego systemu ładowania:
+
+1. **Metadata** (name + description) - zawsze w kontekście (~100 słów)
+2. **SKILL.md body** - gdy Skill się aktywuje (<5k słów)
+3. **Zasoby** - w razie potrzeby (nieograniczone, bo skrypty mogą być wykonywane bez czytania)
+
+Zasada: SKILL.md zawiera tylko esencję, szczegóły w osobnych plikach.
+
+### Struktura Katalogów
+
+- `scripts/` - tylko kod wykonywalny wymagający deterministycznej niezawodności
+- `references/` - dokumentacja do ładowania w kontekst, gdy potrzebna
+- `assets/` - pliki używane w output, NIE do ładowania w kontekst
+- NIE tworz: README.md, INSTALLATION_GUIDE.md, QUICK_REFERENCE.md, CHANGELOG.md w Skills
+
+### Skrypty
+
+- ZAWSZE testuj skrypty przed dodaniem do Skill
+- Dla wielu podobnych skryptów, przetestuj reprezentatywną próbkę
+- Używaj forward slash (Unix style) w ścieżkach: `scripts/helper.py`, nie `scripts\helper.py`
+- Dodaj execute permissions: `chmod +x scripts/*.py` (jeśli potrzebne)
+
+## Proces Tworzenia Skill
+
+### Krok 1: Zrozumienie Skill
+
+Zbierz konkretne przykłady użycia przed rozpoczęciem implementacji:
+
+- "Jakie funkcjonalności powinien wspierać ten Skill?"
+- "Podaj przykłady użycia"
+- "Co użytkownik powie, żeby aktywować ten Skill?"
+
+### Krok 2: Planowanie Zasobów
+
+Dla każdego przykładu użycia:
+
+1. Zastanów się jak wykonać zadanie od zera
+2. Zidentyfikuj co byłoby pomocne: scripts/, references/, assets/
+
+### Krok 3: Inicjalizacja
+
+ZAWSZE używaj `scripts/init_skill.py` dla nowych Skills:
+
+```bash
+scripts/init_skill.py <skill-name> --path <output-directory>
+```
+
+### Krok 4: Edycja Skill
+
+1. Zacznij od zasobów (scripts/, references/, assets/)
+2. Zaktualizuj SKILL.md z frontmatter i instrukcjami
+3. Usuń przykładowe pliki z init, jeśli nie są potrzebne
+
+### Krok 5: Pakowanie
+
+Przed dystrybucją ZAWSZE pakuj Skill:
+
+```bash
+scripts/package_skill.py <path/to/skill-folder>
+```
+
+Skrypt automatycznie waliduje Skill przed pakowaniem.
+
+### Krok 6: Iteracja
+
+Testuj na rzeczywistych zadaniach i iteruj na podstawie feedbacku.
+
+## Styl Komunikacji
+
+- Odpowiadaj po polsku (zgodnie z preferencjami użytkownika)
+- Używaj zwięzłego, bezpośredniego języka
+- Wyjaśniaj decyzje projektowe, gdy są nieoczywiste
+- Pytaj o konkretne przykłady użycia, gdy są niejasne
+
+## Bezpieczeństwo i Dokładność
+
+### Walidacja
+
+- PRZED pakowaniem: uruchom `scripts/package_skill.py` dla walidacji
+- Sprawdź składnię YAML: `cat SKILL.md | head -n 15`
+- Zweryfikuj ścieżki plików - wszystkie muszą istnieć
+- Sprawdź czy description zawiera CO i KIEDY używać Skill
+
+### Opis (Description)
+
+Opis MUSI być specyficzny i zawierać:
+
+- CO Skill robi (funkcjonalność)
+- KIEDY używać (triggery, konteksty, słowa kluczowe)
+
+**Zły przykład:**
+
+```
+description: Helps with documents
+```
+
+**Dobry przykład:**
+
+```
+description: Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
+```
+
+### Zasada Zwięzłości
+
+Context window jest dobrem publicznym. Skills dzielą go z system prompt, historią konwersacji, metadanymi innych Skills i żądaniem użytkownika.
+
+**Domyślne założenie: Claude jest już bardzo inteligentny.** Dodawaj tylko kontekst, którego Claude nie ma. Zadawaj pytania: "Czy Claude naprawdę potrzebuje tego wyjaśnienia?" i "Czy ten akapit uzasadnia swój koszt tokenów?"
+
+Preferuj zwięzłe przykłady nad obszernymi wyjaśnieniami.
+
+## Refaktoryzacja
+
+### Kiedy Refaktorować Skill
+
+- SKILL.md przekracza 500 linii → przenieś do references/
+- Description jest zbyt ogólne → dodaj konkretne triggery
+- Powtarzający się kod → przenieś do scripts/
+- Brak jasności kiedy używać → ulepsz description
+
+### Stopnie Swobody
+
+Dopasuj poziom szczegółowości do zadania:
+
+- **Wysoka swoboda** (instrukcje tekstowe): gdy wiele podejść jest ważnych, decyzje zależą od kontekstu
+- **Średnia swoboda** (pseudokod lub skrypty z parametrami): gdy istnieje preferowany wzorzec, akceptowalna jest pewna wariacja
+- **Niska swoboda** (konkretne skrypty, mało parametrów): gdy operacje są kruche i podatne na błędy, konsystencja jest krytyczna
+
+## Testowanie
+
+- Testuj wszystkie skrypty przed dodaniem do Skill
+- Dla wielu podobnych skryptów, testuj reprezentatywną próbkę
+- Testuj Skill na rzeczywistych zadaniach użytkownika
+- Sprawdź czy Skill aktywuje się w odpowiednich kontekstach
+
+## Wydajność
+
+### Optymalizacja Kontekstu
+
+- Trzymaj SKILL.md zwięzłym (<5k słów)
+- Używaj progressive disclosure - szczegóły w references/
+- Unikaj duplikacji - informacje w SKILL.md LUB references/, nie w obu
+- Dla dużych plików references/ (>10k słów), dodaj wzorce grep w SKILL.md
+
+### Organizacja Dla Wielu Wariantów
+
+Gdy Skill wspiera wiele wariantów/frameworków:
+
+- W SKILL.md: tylko core workflow i wybór wariantu
+- W references/: szczegóły specyficzne dla wariantu (np. aws.md, gcp.md, azure.md)
+
+## Dokumentacja
+
+### W SKILL.md
+
+- Instrukcje krok po kroku
+- Przykłady użycia
+- Referencje do plików w references/ z opisem kiedy je czytać
+- Wymagania (pakiety, zależności)
+
+### W references/
+
+- Szczegółowa dokumentacja
+- Schematy baz danych
+- Dokumentacja API
+- Wiedza domenowa
+- Polityki firmowe
+- Szczegółowe przewodniki workflow
+
+### NIE Dokumentuj
+
+- Procesu tworzenia Skill
+- Procedur setup i testowania
+- Dokumentacji użytkownika
+- README, CHANGELOG, itp.
+
+Skill powinien zawierać tylko informacje potrzebne agentowi AI do wykonania zadania.
+
+## Git/Diffs
+
+### Commity
+
+- Commituj Skills do `.claude/skills/` w projekcie
+- Używaj opisowych commit messages: "Add team Skill for PDF processing"
+- Project Skills są automatycznie dostępne dla zespołu po `git pull`
+
+### Zmiany
+
+- Edytuj SKILL.md bezpośrednio
+- Zmiany wchodzą w życie po restarcie Claude Code
+- Dla Project Skills: commit i push zmian
+
+### Usuwanie
+
+- Usuń katalog Skill: `rm -rf .claude/skills/skill-name`
+- Dla Project Skills: commit usunięcia
+
+## Autonomia
+
+### Kiedy Działać Niezależnie
+
+- Tworzenie nowych Skills zgodnie z procesem (kroki 1-6)
+- Walidacja YAML i struktury
+- Testowanie skryptów
+- Refaktoryzacja Skills przekraczających limity
+- Pakowanie Skills przed dystrybucją
+
+### Kiedy Pytać
+
+- Gdy przykłady użycia są niejasne
+- Gdy brakuje zasobów (np. brand assets dla brand-guidelines)
+- Gdy wymagane są decyzje projektowe wpływające na funkcjonalność
+- Gdy description wymaga weryfikacji z użytkownikiem
+
+### Narzędzia Do Użycia
+
+- `scripts/init_skill.py` - inicjalizacja nowego Skill
+- `scripts/package_skill.py` - pakowanie i walidacja Skill
+- `scripts/quick_validate.py` - szybka walidacja (jeśli dostępne)
+- `claude --debug` - tryb debugowania dla błędów ładowania Skills
+
+## Best Practices
+
+### Focused Skills
+
+Jeden Skill = jedna zdolność:
+
+- ✅ "PDF form filling"
+- ✅ "Excel data analysis"
+- ✅ "Git commit messages"
+- ❌ "Document processing" (podziel na osobne Skills)
+- ❌ "Data tools" (podziel według typu danych lub operacji)
+
+### Clear Descriptions
+
+Pomóż Claude odkryć kiedy używać Skills poprzez specyficzne triggery w description:
+
+- ✅ "Analyze Excel spreadsheets, create pivot tables, and generate charts. Use when working with Excel files, spreadsheets, or analyzing tabular data in .xlsx format."
+- ❌ "For files"
+
+### Avoiding Conflicts
+
+Gdy wiele podobnych Skills:
+
+- Używaj różnych, specyficznych triggerów w description
+- Zamiast ogólnych "For data analysis", użyj "Analyze sales data in Excel files and CRM exports" vs "Analyze log files and system metrics data"
+
+### Versioning
+
+Możesz dokumentować wersje w SKILL.md body (nie w frontmatter):
+
+```markdown
+## Version History
+
+- v2.0.0 (2025-10-01): Breaking changes to API
+- v1.1.0 (2025-09-15): Added new features
+- v1.0.0 (2025-09-01): Initial release
+```
+
+## Troubleshooting
+
+### Claude nie używa Skill
+
+1. Sprawdź czy description jest wystarczająco specyficzne
+2. Zweryfikuj składnię YAML
+3. Sprawdź lokalizację pliku (personal vs project)
+4. Uruchom `claude --debug` dla błędów ładowania
+
+### Skill ma błędy
+
+1. Sprawdź czy zależności są dostępne
+2. Sprawdź uprawnienia wykonywania skryptów
+3. Zweryfikuj ścieżki plików (używaj forward slash)
+
+### Konflikty między Skills
+
+- Używaj specyficznych, różnych triggerów w description
+- Rozróżniaj Skills przez kontekst użycia, nie tylko funkcjonalność
+
+## Wzorce Projektowe
+
+### Wzorce Workflow
+
+Dla zadań wieloetapowych, użyj sekwencyjnych kroków:
+
+```markdown
+## Process
+
+1. Analyze the form (run analyze_form.py)
+2. Create field mapping (edit fields.json)
+3. Validate mapping (run validate_fields.py)
+4. Fill the form (run fill_form.py)
+```
+
+Dla zadań z logiką warunkową, użyj punktów decyzyjnych:
+
+```markdown
+1. Determine the modification type:
+   **Creating new content?** → Follow "Creation workflow"
+   **Editing existing content?** → Follow "Editing workflow"
+```
+
+### Wzorce Output
+
+Dla wymagań ścisłych (API responses, formaty danych):
+
+```markdown
+## Report structure
+
+ALWAYS use this exact template structure:
+[template]
+```
+
+Dla elastycznych wymagań:
+
+```markdown
+## Report structure
+
+Here is a sensible default format, but use your best judgment:
+[template]
+Adjust sections as needed.
+```
+
+Dla jakości zależnej od przykładów, użyj input/output pairs:
+
+```markdown
+## Commit message format
+
+Generate commit messages following these examples:
+
+**Example 1:**
+Input: [example]
+Output: [example]
+```
+
+## Ogólne Zasady Kodu
+
+- Używaj spójnego formatowania (Python: PEP 8, JavaScript: Prettier/ESLint)
+- Pisz czytelny, samodokumentujący się kod
+- Dodawaj komentarze tylko gdy kod nie jest oczywisty
+- Unikaj magic numbers - używaj stałych z opisowymi nazwami
+- Obsługuj błędy explicite - nie ukrywaj wyjątków
+- Używaj znaczących nazw zmiennych i funkcji
+- Zachowaj funkcje małe i skupione na jednym zadaniu
+- Unikaj głębokiego zagnieżdżenia (max 3-4 poziomy)
